@@ -1,0 +1,207 @@
+C51 COMPILER V9.56.0.0   24C02                                                             01/26/2018 20:26:53 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE 24C02
+OBJECT MODULE PLACED IN .\Objects\24c02.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE Driver\24c02.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.
+                    -\Listings\24c02.lst) TABS(2) OBJECT(.\Objects\24c02.obj)
+
+line level    source
+
+   1          #include "24c02.h"
+   2          
+   3          /*========================================================================*/
+   4          /*函数名称:void I2C_Start()
+   5          /*函数功能:I2C开始函数
+   6          /*输入参数:无
+   7          /*输出参数:无
+   8          /*========================================================================*/
+   9          void I2C_Start()
+  10          {
+  11   1        I2C_SDA = 1;
+  12   1        I2C_SCL = 1;
+  13   1        I2CDelay();
+  14   1        I2C_SDA = 0;
+  15   1        I2CDelay();
+  16   1        I2C_SCL = 0;
+  17   1      }
+  18          
+  19          /*========================================================================*/
+  20          /*函数名称:void I2C_Stop()
+  21          /*函数功能:I2C停止函数
+  22          /*输入参数:无
+  23          /*输出参数:无
+  24          /*========================================================================*/
+  25          void I2C_Stop()
+  26          {
+  27   1        I2C_SCL = 0;
+  28   1        I2C_SDA = 0;
+  29   1        I2CDelay();
+  30   1        I2C_SCL = 1;
+  31   1        I2CDelay();
+  32   1        I2C_SDA = 1;
+  33   1        I2CDelay();
+  34   1      }
+  35          
+  36          /*========================================================================*/
+  37          /*函数名称:bit I2C_Write(uchar dat)
+  38          /*函数功能:I2C总线写操作函数
+  39          /*输入参数:dat(待写入字节)
+  40          /*输出参数:返回从机的应答值  
+  41          /*========================================================================*/
+  42          bit I2C_Write(uchar dat)
+  43          {
+  44   1        bit ack = 0;
+  45   1        uchar mask;
+  46   1        for(mask=0x80; mask!=0; mask>>=1)               //将mask按位与dat 从高位到低位依次判断dat每一位的值
+  47   1        {
+  48   2          if((mask&dat) == 0)                           //若值为0 则拉低SDA 若为1则拉高SDA
+  49   2            I2C_SDA = 0;
+  50   2          else
+  51   2            I2C_SDA = 1;
+  52   2          I2CDelay();
+  53   2          I2C_SCL = 1;
+  54   2          I2CDelay();
+C51 COMPILER V9.56.0.0   24C02                                                             01/26/2018 20:26:53 PAGE 2   
+
+  55   2          I2C_SCL = 0;
+  56   2        }
+  57   1        I2C_SDA = 1;
+  58   1        I2CDelay();
+  59   1        I2C_SCL = 1;
+  60   1        ack = I2C_SDA;
+  61   1        I2CDelay();
+  62   1        I2C_SCL = 0;
+  63   1      
+  64   1        return (~ack);
+  65   1      }
+  66          
+  67          /*========================================================================*/
+  68          /*函数名称:uchar I2CReadACK()
+  69          /*函数功能:发送应答信号
+  70          /*输入参数:无
+  71          /*输出参数:返回读到的字节   
+  72          /*========================================================================*/
+  73          uchar I2CReadACK()
+  74          {
+  75   1        uchar mask;
+  76   1        uchar dat;
+  77   1        I2C_SDA=1;                                  //确保主机释放SDA
+  78   1        for(mask=0x80;mask!=0;mask>>=1)
+  79   1        {
+  80   2          I2CDelay();
+  81   2          I2C_SCL=1;                                //拉高SCL
+  82   2          if(I2C_SDA==0)
+  83   2            dat&=~mask;                             //SDA为0时 dat对应位清零
+  84   2          else
+  85   2            dat|=mask;
+  86   2          I2CDelay();
+  87   2          I2C_SCL=0;                                //拉低SCL 使从机发送下一位
+  88   2        }
+  89   1        I2C_SDA=0;                                  //8位数据发送完后 拉低SDA 发送应答信号
+  90   1        I2CDelay();
+  91   1        I2C_SCL=1;                                  //拉高SCL
+  92   1        I2CDelay();
+  93   1        I2C_SCL=0;                                  //再拉低SCL 完成应答位 保持住总线
+  94   1        return dat;
+  95   1      }
+  96          
+  97          /*========================================================================*/
+  98          /*函数名称:uchar I2CReadACK()
+  99          /*函数功能:发送非应答信号
+ 100          /*输入参数:无
+ 101          /*输出参数:返回读到的字节   
+ 102          /*========================================================================*/
+ 103          uchar I2CReadNAK()
+ 104          {
+ 105   1        uchar mask;
+ 106   1        uchar dat;
+ 107   1        I2C_SDA=1;
+ 108   1        for(mask=0x80;mask!=0;mask>>=1)
+ 109   1        {
+ 110   2          I2CDelay();
+ 111   2          I2C_SCL=1;
+ 112   2          if(I2C_SDA==0)
+ 113   2            dat&=~mask;
+ 114   2          else
+ 115   2            dat|=mask;
+ 116   2          I2CDelay();
+C51 COMPILER V9.56.0.0   24C02                                                             01/26/2018 20:26:53 PAGE 3   
+
+ 117   2          I2C_SCL=0;
+ 118   2        }
+ 119   1        I2C_SDA=1;
+ 120   1        I2CDelay();
+ 121   1        I2C_SCL=1;
+ 122   1        I2CDelay();
+ 123   1        I2C_SCL=0;
+ 124   1        return dat;
+ 125   1      }
+ 126          
+ 127          /*========================================================================*/
+ 128          /*函数名称:void E2P_Read(uchar *buf,uchar addr,uchar len)
+ 129          /*函数功能:读取某地址一定长度的数据
+ 130          /*输入参数: buf：数据接收指针 addr：EEPROM起始地址 len：读取数据长度   
+ 131          /*输出参数:无
+ 132          /*========================================================================*/
+ 133          void E2P_Read(uchar *buf,uchar addr,uchar len)
+ 134          {
+ 135   1        do                                                //通过寻址操作判断当前是否可进行读写
+ 136   1        {
+ 137   2          I2C_Start();
+ 138   2          if(I2C_Write(0x50<<1))                          //应答则跳出循环 非应答则继续查询
+ 139   2            break;
+ 140   2          I2C_Stop();
+ 141   2        }while(1);
+ 142   1        
+ 143   1        I2C_Write(addr);                                  //写入起始地址
+ 144   1        I2C_Start();                                      //发送重复起始信号
+ 145   1        I2C_Write((0x50<<1)|0x01);                        //寻址器件 后续为读操作
+ 146   1        while(len>1)                                      //连续读取len—1个字节
+ 147   1        {
+ 148   2          *buf++=I2CReadACK();                            //最后字节之前为读取操作+应答
+ 149   2          len--;
+ 150   2        }
+ 151   1        *buf=I2CReadNAK();                                //最后一个字节为读取操作+非应答
+ 152   1        I2C_Stop();
+ 153   1      }
+ 154          
+ 155          /*========================================================================*/
+ 156          /*函数名称:void E2P_Write(uchar *buf,uchar addr,uchar len)
+ 157          /*函数功能:向某地址写入一定长度数据
+ 158          /*输入参数: buf：数据接收指针 addr：EEPROM起始地址 len：读取数据长度   
+ 159          /*输出参数:无
+ 160          /*========================================================================*/
+ 161          void E2P_Write(uchar *buf,uchar addr,uchar len)
+ 162          {
+ 163   1        while(len--)                                        //每写一个字节都要检测一次状态
+ 164   1        {
+ 165   2          do                                                //通过寻址操作判断当前是否可进行读写
+ 166   2          {
+ 167   3            I2C_Start();
+ 168   3            if(I2C_Write(0x50<<1))                          //应答则跳出循环 非应答则继续查询
+ 169   3              break;
+ 170   3            I2C_Stop();
+ 171   3          }while(1);
+ 172   2          
+ 173   2          I2C_Write(addr++);                                //写入起始地址 地址依次+1
+ 174   2          I2C_Write(*buf++);                                //写入一个字节数据
+ 175   2          I2C_Stop();
+ 176   2        }
+ 177   1      }
+
+C51 COMPILER V9.56.0.0   24C02                                                             01/26/2018 20:26:53 PAGE 4   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    367    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      10
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,104 @@
+C51 COMPILER V9.56.0.0   KEY2                                                              01/26/2018 20:26:53 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE KEY2
+OBJECT MODULE PLACED IN .\Objects\key2.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE Driver\key2.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\
+                    -Listings\key2.lst) TABS(2) OBJECT(.\Objects\key2.obj)
+
+line level    source
+
+   1          //**********************Disigned By F H X***************************//
+   2          //*********************4位独立按键扫描程序**************************//
+   3          //*****1 按键驱动函数 ：检测按键动作 执行 mian.c 中按键动作函数*****//
+   4          //*****2 按键扫描函数 ：扫描按键状态 在main.c 中的中断函数被调用****//
+   5          #include "key2.h"
+   6          
+   7          
+   8          uchar code KeyCodeMap2[4] = {0x01,0x02,0x03,0x04};         // 
+   9          uchar KeySta2[4] = {1,1,1,1};                              // 按键当前状态 默认为弹起
+  10          ulong pdata KeyDownTime2[4] = {0,0,0,0};                   // 按键按下时间 默认为0
+  11          
+  12          extern void KeyDown(uchar keycode);
+  13          
+  14          /*========================================================================*/
+  15          /*函数名称:void KeyDrive2()
+  16          /*函数功能:独立按键驱动
+  17          /*输入参数:无
+  18          /*输出参数:无
+  19          /*========================================================================*/
+  20          void KeyDrive2()
+  21          {
+  22   1        uchar i;
+  23   1        static uchar backup2[4] = {1,1,1,1};                     //保存上次按键状态 默认都为弹起
+  24   1        static ulong pdata TimeTh2[4] = {1000,1000,1000,1000};   //按键按下时间阈值 超过阈值则为长按模式
+  25   1        for(i=0;i<4;i++)
+  26   1        {
+  27   2          if(backup2[i]!=KeySta2[i])                              //检测按键动作
+  28   2          {
+  29   3            if(KeySta2[i]==0)                                    //按键被按下 
+  30   3            {
+  31   4              KeyDown(KeyCodeMap2[i]);                           //执行按键动作函数
+  32   4            }
+  33   3            backup2[i]=KeySta2[i];                                //保存当前按键状态
+  34   3          }
+  35   2          if(KeyDownTime2[i]>0)                                  //检测按键按下时间
+  36   2          {
+  37   3            if(KeyDownTime2[i]>=TimeTh2[i])                       //按键按下时间大于阈值 执行按键动作函数
+  38   3            {
+  39   4              KeyDown(KeyCodeMap2[i]);
+  40   4              TimeTh2[i]+=200;                                   //阈值自增
+  41   4            }
+  42   3          }
+  43   2          else 
+  44   2          {
+  45   3            TimeTh2[i]=1000;                                     //按键弹起时恢复阈值时间
+  46   3          }
+  47   2        }
+  48   1      }
+  49          
+  50          /*========================================================================*/
+  51          /*函数名称:void KeyScan2()
+  52          /*函数功能:独立按键扫描
+  53          /*输入参数:无
+  54          /*输出参数:无
+C51 COMPILER V9.56.0.0   KEY2                                                              01/26/2018 20:26:53 PAGE 2   
+
+  55          /*========================================================================*/
+  56          void KeyScan2()
+  57          {
+  58   1        uchar i;
+  59   1        static uchar Keybuff2[4]={0xFF,0xFF,0xFF,0xFF};          //按键扫描缓冲区
+  60   1        
+  61   1        Keybuff2[0]=(Keybuff2[0]<<1)|KEY_1;                       //逐个扫描4个独立按键 起到延时消抖作用
+  62   1        Keybuff2[1]=(Keybuff2[1]<<1)|KEY_2;
+  63   1        Keybuff2[2]=(Keybuff2[2]<<1)|KEY_3;
+  64   1        Keybuff2[3]=(Keybuff2[3]<<1)|KEY_4;
+  65   1        for(i=0;i<4;i++)
+  66   1        {
+  67   2          if((Keybuff2[i]&0x0F)==0x00)                           //检测到某个按键被按下
+  68   2          {
+  69   3            KeySta2[i]=0;                                        //改变该按键状态
+  70   3            KeyDownTime2[i]+=4;                                  //该按键按下时间累加
+  71   3          }
+  72   2          else if((Keybuff2[i]&0x0F)==0x0F)                      //检测到某个按键弹起
+  73   2          {
+  74   3            KeySta2[i] = 1;                                      //改变该按键状态
+  75   3            KeyDownTime2[i] = 0;                                 //该按键按下时间清零
+  76   3          }
+  77   2        }
+  78   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    451    ----
+   CONSTANT SIZE    =      4    ----
+   XDATA SIZE       =     12       2
+   PDATA SIZE       =     32    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

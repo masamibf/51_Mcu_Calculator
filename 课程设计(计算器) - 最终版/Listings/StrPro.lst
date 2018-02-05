@@ -1,0 +1,87 @@
+C51 COMPILER V9.56.0.0   STRPRO                                                            01/26/2018 20:26:52 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE STRPRO
+OBJECT MODULE PLACED IN .\Objects\StrPro.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE Kernel\StrPro.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(
+                    -.\Listings\StrPro.lst) TABS(2) OBJECT(.\Objects\StrPro.obj)
+
+line level    source
+
+   1          /*========================*/
+   2          /*  包含字符串处理函数    */
+   3          /*========================*/
+   4          #include "StrPro.h"
+   5          
+   6          /*========================================================================*/
+   7          /*函数名称:uchar LongToString(uchar *str,float dat)
+   8          /*函数功能:长整型转为字符串
+   9          /*输入参数:字符串*str 长整型数dat
+  10          /*输出参数:字符串长度len
+  11          /*========================================================================*/
+  12          uchar LongToString(uchar *str,float dat)
+  13          {
+  14   1        uchar len;
+  15   1        
+  16   1        sprintf(str,"%10ld",(long int)dat);
+  17   1        len = sprintf(str,"%10ld",(long int)dat);
+  18   1        
+  19   1        return len;                                  //返回len
+  20   1      }
+  21          
+  22          /*========================================================================*/
+  23          /*函数名称:uchar FloatToString(uchar *str,float dat)
+  24          /*函数功能:浮点型转为字符串
+  25          /*输入参数:字符串*str 浮点型数dat
+  26          /*输出参数:字符串长度len
+  27          /*========================================================================*/
+  28          uchar FloatToString(uchar *str,float dat)
+  29          {
+  30   1        uchar len;
+  31   1        
+  32   1        sprintf(str,"%5.5f",dat);
+  33   1        
+  34   1        len = sprintf(str,"%5.5f",dat);
+  35   1        
+  36   1        while(len-- > 0)                              //去除末尾多余的 0
+  37   1        {
+  38   2          if(str[len] != '0')
+  39   2          {
+  40   3            break;
+  41   3          }
+  42   2        }
+  43   1        
+  44   1        len = len + 1;
+  45   1        return len;
+  46   1      }
+  47          
+  48          /*========================================================================*/
+  49          /*函数名称:float StringToFloat(uchar *buf)
+  50          /*函数功能:字符转为浮点数
+  51          /*输入参数:字符数组 buf
+  52          /*输出参数:浮点数 num
+  53          /*========================================================================*/
+  54          float StringToFloat(uchar *buf)
+C51 COMPILER V9.56.0.0   STRPRO                                                            01/26/2018 20:26:52 PAGE 2   
+
+  55          { 
+  56   1        float num;
+  57   1        
+  58   1        num = atof(buf);
+  59   1        
+  60   1        return num;
+  61   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    261    ----
+   CONSTANT SIZE    =     12    ----
+   XDATA SIZE       =   ----      14
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,149 @@
+C51 COMPILER V9.56.0.0   KEY                                                               01/26/2018 20:26:53 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\key.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE Driver\key.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\L
+                    -istings\key.lst) TABS(2) OBJECT(.\Objects\key.obj)
+
+line level    source
+
+   1          #include "key.h"
+   2          //**********************Disigned By F H X***************************//
+   3          //*********************4*4矩阵键盘扫描程序**************************//
+   4          //*****1 按键驱动函数 ：检测按键动作 执行 main.c 中按键动作函数*****//
+   5          //*****2 按键扫描函数 ：扫描按键状态 在main.c 中的中断函数被调用****//
+   6          
+   7          
+   8          uchar code KeyCodeMap[4][4]={            
+   9               {0x31,0x32,0x33,0x26},               //数字键1，数字键2，数字键3，向上键
+  10               {0x34,0x35,0x36,0x25},               //数字键4，数字键5，数字键6，向左键
+  11               {0x37,0x38,0x39,0x28},               //数字键7，数字键8，数字键9，向下键 
+  12               {0x30,0x1B,0x0D,0x27}                //数字键0,  ESC键 ，回车键 ，向右键
+  13          };
+  14          
+  15          uchar KeySta[4][4]={                      //16个按键当前状态
+  16               {1,1,1,1},
+  17               {1,1,1,1},
+  18               {1,1,1,1},
+  19               {1,1,1,1} 
+  20          };                                        
+  21          ulong pdata KeyDownTime[4][4]={           //16个按键按下时间
+  22               {0,0,0,0},
+  23               {0,0,0,0},
+  24               {0,0,0,0},
+  25               {0,0,0,0} 
+  26          };  
+  27          
+  28          /*========================================================================*/
+  29          /*函数名称:void KeyDrive()
+  30          /*函数功能:矩阵按键驱动
+  31          /*输入参数:无
+  32          /*输出参数:无
+  33          /*========================================================================*/
+  34          void KeyDrive()
+  35          {
+  36   1        uchar i,j;
+  37   1        static uchar backup[4][4]={             //保存上次按键状态 默认都为弹起
+  38   1           {1,1,1,1},
+  39   1           {1,1,1,1},
+  40   1           {1,1,1,1},
+  41   1           {1,1,1,1}
+  42   1        };
+  43   1        static ulong pdata TimeTh[4][4]={       //按键按下时间阈值 超过阈值则为长按模式
+  44   1           {1000,1000,1000,1000},
+  45   1           {1000,1000,1000,1000},
+  46   1           {1000,1000,1000,1000},
+  47   1           {1000,1000,1000,1000}
+  48   1        };
+  49   1        for(i=0;i<4;i++)                        //循环扫描4×4矩阵键盘
+  50   1        {
+  51   2          for(j=0;j<4;j++)
+  52   2          {
+  53   3            if(backup[i][j]!=KeySta[i][j])      //检测按键动作
+  54   3            {
+C51 COMPILER V9.56.0.0   KEY                                                               01/26/2018 20:26:53 PAGE 2   
+
+  55   4              if(KeySta[i][j]==0)               //按键被按下
+  56   4              {
+  57   5                KeyDown(KeyCodeMap[i][j]);      //执行按键动作函数
+  58   5              }
+  59   4              backup[i][j]=KeySta[i][j];        //保存当前按键值
+  60   4            }
+  61   3            if(KeyDownTime[i][j]>0)             //检测按键按下时间
+  62   3            {
+  63   4              if(KeyDownTime[i][j]>=TimeTh[i][j])
+  64   4              {
+  65   5                KeyDown(KeyCodeMap[i][j]);      //按键按下时间大于阈值 执行按键动作函数
+  66   5                TimeTh[i][j]+=200;              //阈值自增
+  67   5              }
+  68   4            }
+  69   3            else 
+  70   3            {
+  71   4              TimeTh[i][j]=1000;                //按键弹起时恢复阈值时间
+  72   4            }
+  73   3          }
+  74   2        }
+  75   1      }
+  76          
+  77          /*========================================================================*/
+  78          /*函数名称:void KeyScan()
+  79          /*函数功能:矩阵按键扫描
+  80          /*输入参数:无
+  81          /*输出参数:无
+  82          /*========================================================================*/
+  83          void KeyScan()
+  84          {
+  85   1        uchar i;
+  86   1        static uchar keyout=0;                  //矩阵按键扫描输出索引
+  87   1        static uchar Keybuff[4][4]={            //按键扫描缓冲区
+  88   1          {0xFF,0xFF,0xFF,0xFF},
+  89   1          {0xFF,0xFF,0xFF,0xFF},
+  90   1          {0xFF,0xFF,0xFF,0xFF},
+  91   1          {0xFF,0xFF,0xFF,0xFF}
+  92   1        };
+  93   1                                                //逐行检测按键是否被按下 起到按键消抖作用
+  94   1        Keybuff[keyout][0]=(Keybuff[keyout][0]<<1)|KEY_IN_1;
+  95   1        Keybuff[keyout][1]=(Keybuff[keyout][1]<<1)|KEY_IN_2;
+  96   1        Keybuff[keyout][2]=(Keybuff[keyout][2]<<1)|KEY_IN_3;
+  97   1        Keybuff[keyout][3]=(Keybuff[keyout][3]<<1)|KEY_IN_4;
+  98   1        for(i=0;i<4;i++)
+  99   1        {
+ 100   2          if((Keybuff[keyout][i]&0x0F)==0x00)     //检测某个按键被按下
+ 101   2          {
+ 102   3            KeySta[keyout][i]=0;                //改变该按键状态
+ 103   3            KeyDownTime[keyout][i]+=4;          //该按键按下时间累加
+ 104   3          }
+ 105   2          else if((Keybuff[keyout][i]&0x0F)==0x0F)//检测某个按键弹起
+ 106   2          {
+ 107   3            KeySta[keyout][i] = 1;              //改变该按键状态
+ 108   3            KeyDownTime[keyout][i] = 0;         //该按键按下时间清零
+ 109   3          }
+ 110   2        }
+ 111   1        keyout++;
+ 112   1        keyout&=0x03;                           //keyout到4自动清零
+ 113   1        switch(keyout)
+ 114   1        {
+ 115   2          case 0:KEY_OUT_4=1,KEY_OUT_1=0;break; //拉高当前输出脚 拉低下次输出脚
+ 116   2          case 1:KEY_OUT_1=1,KEY_OUT_2=0;break;
+C51 COMPILER V9.56.0.0   KEY                                                               01/26/2018 20:26:53 PAGE 3   
+
+ 117   2          case 2:KEY_OUT_2=1,KEY_OUT_3=0;break;
+ 118   2          case 3:KEY_OUT_3=1;KEY_OUT_4=0;break;
+ 119   2          default:break;
+ 120   2        }
+ 121   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    877    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =     49       3
+   PDATA SIZE       =    128    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

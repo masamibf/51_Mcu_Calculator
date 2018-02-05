@@ -1,0 +1,126 @@
+C51 COMPILER V9.56.0.0   EEPROM                                                            12/14/2017 18:51:42 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE EEPROM
+OBJECT MODULE PLACED IN .\Objects\eeprom.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE eeprom.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\eeprom.lst) TABS(2) OBJECT(.\Objects\eeprom.obj)
+
+line level    source
+
+   1          #include "eeprom.h"
+   2          #include "I2C.h"
+   3          
+   4          
+   5          
+   6          /***********************************************E2PROM读取字节函数****************************************
+             -********/
+   7          /*                                   读取EEPROM中的一个字节    addr：字节地址                             
+             -       */
+   8          /*********************************************************************************************************
+             -********/
+   9          uchar E2ReadByte(uchar addr)
+  10          {
+  11   1        uchar dat;
+  12   1        I2C_Start();
+  13   1        I2C_Write(0x50<<1);                             //寻址器件 后续为写操作
+  14   1        I2C_Write(addr);                                //写入存储地址
+  15   1        I2C_Start();                                    //发送重复起始信号
+  16   1        I2C_Write((0x50<<1)|0x01);                      //寻址器件 后续为读操作
+  17   1        dat=I2CReadNAK();                               //读取一个字节数据
+  18   1        I2C_Stop();
+  19   1        return dat;
+  20   1      }
+  21          
+  22          /***********************************************E2PROM写入字节函数****************************************
+             -********/
+  23          /*                                   向E2PROM中写入一个字节  addr:字节地址 dat：数据                      
+             -       */
+  24          /*********************************************************************************************************
+             -********/
+  25          void E2WriteByte(uchar addr,uchar dat)
+  26          {
+  27   1        I2C_Start();
+  28   1        I2C_Write(0x50<<1);                             //寻址器件 后续为写操作
+  29   1        I2C_Write(addr);                                //写入存储地址
+  30   1        I2C_Write(dat);                                 //写入一个字节数据
+  31   1        I2C_Stop();
+  32   1      }
+  33          
+  34          
+  35          /**********************************************EEPROM读取数据函数*****************************************
+             -********/
+  36          /*                            buf：数据接收指针 addr：EEPROM起始地址 len：读取数据长度                    
+             -       */
+  37          /*********************************************************************************************************
+             -********/
+  38          void E2P_Read(uchar *buf,uchar addr,uchar len)
+  39          {
+  40   1        do                                                //通过寻址操作判断当前是否可进行读写
+  41   1        {
+  42   2          I2C_Start();
+  43   2          if(I2C_Write(0x50<<1))                          //应答则跳出循环 非应答则继续查询
+  44   2            break;
+  45   2          I2C_Stop();
+C51 COMPILER V9.56.0.0   EEPROM                                                            12/14/2017 18:51:42 PAGE 2   
+
+  46   2        }while(1);
+  47   1        
+  48   1        I2C_Write(addr);                                  //写入起始地址
+  49   1        I2C_Start();                                      //发送重复起始信号
+  50   1        I2C_Write((0x50<<1)|0x01);                        //寻址器件 后续为读操作
+  51   1        while(len>1)                                      //连续读取len—1个字节
+  52   1        {
+  53   2          *buf++=I2CReadACK();                            //最后字节之前为读取操作+应答
+  54   2          len--;
+  55   2        }
+  56   1        *buf=I2CReadNAK();                                //最后一个字节为读取操作+非应答
+  57   1        I2C_Stop();
+  58   1      }
+  59          
+  60          /**********************************************EEPROM写入数据函数*****************************************
+             -********/
+  61          /*                            buf：数据发送指针 addr：EEPROM起始地址 len：写入数据长度                    
+             -       */
+  62          /*********************************************************************************************************
+             -********/
+  63          void E2P_Write(uchar *buf,uchar addr,uchar len)
+  64          {
+  65   1        while(len>0)
+  66   1        {
+  67   2          do
+  68   2          {
+  69   3            I2C_Start();
+  70   3            if(I2C_Write(0x50<<1))                          //应答则跳出循环 非应答则继续查询
+  71   3              break;
+  72   3            I2C_Stop();
+  73   3          }while(1);
+  74   2          
+  75   2          I2C_Write(addr);                                  //写入起始地址
+  76   2          while(len>0)
+  77   2          {
+  78   3            I2C_Write(*buf++);                              //写入一个字节数据
+  79   3            len--;
+  80   3            addr++;                                         //地址计数递增
+  81   3            if((addr|0x07)==0)                              //24c02共256个字节 8个字节为1页 一共32页 
+  82   3                                                            //addr低三位为0 那么addr为8的倍数 说明已经跨页
+  83   3                                                            //如果跨页则跳出当前while循环
+  84   3              break;
+  85   3          }
+  86   2          I2C_Stop();
+  87   2        }
+  88   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    288    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      14
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

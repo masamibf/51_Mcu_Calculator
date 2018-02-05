@@ -1,0 +1,334 @@
+C51 COMPILER V9.56.0.0   CALCULATE                                                         01/26/2018 20:26:52 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE CALCULATE
+OBJECT MODULE PLACED IN .\Objects\Calculate.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE Kernel\Calculate.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRI
+                    -NT(.\Listings\Calculate.lst) TABS(2) OBJECT(.\Objects\Calculate.obj)
+
+line level    source
+
+   1          #include "Calculate.h"
+   2          
+   3          
+   4          uchar oprt = 0;                         //运算符类型
+   5          uchar step = 0;                         //操作步骤变量
+   6          
+   7          uchar result_buf[12];                   //保存运算结果的缓冲区
+   8          uchar result_len;                       //运算结果长度
+   9          
+  10          float num1 = 0;                         //运算数1
+  11          float num2 = 0;                         //运算数2
+  12          float result = 0;                       //运算结果
+  13          
+  14          uchar num1_buf[10];                     //保存第一个运算数的缓冲区
+  15          uchar num2_buf[10];                     //保存第二个运算数的缓冲区
+  16          uchar num1_index = 0;                   //运算数一 索引变量
+  17          uchar num2_index = 0;                   //运算数二 索引变量
+  18          
+  19          bit dec_flag = 0;                       //小数点标志
+  20          
+  21          /*========================================================================*/
+  22          /*函数名称:void NumAction(uchar n)
+  23          /*函数功能:数字输入
+  24          /*输入参数:n
+  25          /*输出参数:无
+  26          /*========================================================================*/
+  27          void NumAction(uchar n)
+  28          {
+  29   1        if(step>1)Reset();                      //完成运算则复位
+  30   1        
+  31   1        if(step == 0)                           //输入第一个运算数
+  32   1        {
+  33   2          if(num1_index < 10)                 //运算数长度不超过 10 位
+  34   2          {
+  35   3            num1_buf[num1_index] = n + '0';
+  36   3            num1_index ++;
+  37   3            LcdShowNum(1,1);                //在LCD1602第二行显示运算数一
+  38   3          }
+  39   2          else
+  40   2            return;
+  41   2        }
+  42   1        else if(step == 1)                      //输入第二个运算数
+  43   1        {
+  44   2          if(num2_index < 10)
+  45   2          {
+  46   3            num2_buf[num2_index] = n + '0';
+  47   3            num2_index ++;
+  48   3            LcdShowNum(1,2);                //在LCD1602第二行显示运算数二
+  49   3          }
+  50   2          else
+  51   2            return;
+  52   2        }
+  53   1      }
+  54          
+C51 COMPILER V9.56.0.0   CALCULATE                                                         01/26/2018 20:26:52 PAGE 2   
+
+  55          /*========================================================================*/
+  56          /*函数名称:void DecimalAction()
+  57          /*函数功能:小数点输入
+  58          /*输入参数:无
+  59          /*输出参数:无
+  60          /*========================================================================*/
+  61          void DecimalAction()
+  62          { 
+  63   1        if(step == 0)                             //在第一个运算数中加入小数点
+  64   1        {
+  65   2          if((num1_index < 10)&&(dec_flag == 0))
+  66   2          {
+  67   3            dec_flag = 1;                     //每个运算数只能一个小数点
+  68   3            num1_buf[num1_index] = '.';
+  69   3            num1_index ++;
+  70   3            LcdShowNum(1,1);
+  71   3          }
+  72   2          else
+  73   2            return;
+  74   2        }
+  75   1        
+  76   1        else if(step == 1)                        //在第二个运算数中加入小数点
+  77   1        {
+  78   2          if((num2_index < 10)&&(dec_flag == 0))
+  79   2          {
+  80   3            dec_flag = 1;
+  81   3            num2_buf[num2_index] = '.';
+  82   3            num2_index ++;
+  83   3            LcdShowNum(1,2);
+  84   3          }
+  85   2          else
+  86   2            return;
+  87   2        }
+  88   1      }
+  89          
+  90          /*========================================================================*/
+  91          /*函数名称:void OprAction(uchar type)
+  92          /*函数功能:运算符输入
+  93          /*输入参数:type
+  94          /*输出参数:无
+  95          /*========================================================================*/
+  96          void OprAction(uchar type)
+  97          {
+  98   1        if(step==0)                              //第二个运算数未输入时响应
+  99   1        {
+ 100   2          num1 = StringToFloat(num1_buf);      //将运算数缓冲区的字符转化为浮点数
+ 101   2          dec_flag = 0;                        //标志清零
+ 102   2          LcdAreaClear(0,0,16-num1_index);     //清除第一行左边的字符
+ 103   2          LcdShowNum(0,1);                     //字符显示在第一行右边
+ 104   2          LcdShowOpr(0,1,type);                //运算符显示在第二行左边
+ 105   2          LcdAreaClear(1,1,14);                //清除第二行中间的字符
+ 106   2          LcdShowStr(15,1,"0");
+ 107   2          oprt = type;                         //记录当前运算符
+ 108   2          num1_index = 0;
+ 109   2          step = 1;
+ 110   2        }
+ 111   1        
+ 112   1        if(step == 2)                               //连续输入状态
+ 113   1        {
+ 114   2          dec_flag = 0;
+ 115   2          num1 = result;                          //运算数一 为上一次运算结果
+ 116   2          LcdAreaClear(0,0,16);
+C51 COMPILER V9.56.0.0   CALCULATE                                                         01/26/2018 20:26:52 PAGE 3   
+
+ 117   2          LcdShowStr(16-result_len,0,result_buf); //上一次运算结果显示在第一行
+ 118   2          LcdAreaClear(0,1,16);
+ 119   2          LcdShowOpr(0,1,type);                   //运算符显示在第二行左边
+ 120   2          oprt = type;
+ 121   2          step = 1;
+ 122   2        }
+ 123   1      }
+ 124          
+ 125          /*========================================================================*/
+ 126          /*函数名称:void GetResult()
+ 127          /*函数功能:计算结果
+ 128          /*输入参数:无
+ 129          /*输出参数:无
+ 130          /*========================================================================*/
+ 131          void GetResult()
+ 132          {
+ 133   1        num2 = StringToFloat(num2_buf);
+ 134   1        
+ 135   1        if(step==1)                                        //第二运算数输入后才计算
+ 136   1        {
+ 137   2          step=2;
+ 138   2          dec_flag = 0;                                  //小数点标志清零
+ 139   2          switch(oprt)
+ 140   2          {
+ 141   3            case 0:result=(float)(num1+num2);break;
+ 142   3            case 1:result=(float)(num1-num2);break;
+ 143   3            case 2:result=(float)(num1*num2);break;
+ 144   3            case 3:result=(float)(num1/num2);break;
+ 145   3            case 4:result=(float)pow(num1,num2);break;
+ 146   3            default:break;
+ 147   3          }
+ 148   2          LcdShowOpr(0,0,oprt);                               //第一行显示运算符
+ 149   2          LcdAreaClear(1,0,16-num2_index);                    //清除运算数二的显示     
+ 150   2          LcdShowNum(0,2);                                    //运算数二显示到第一行
+ 151   2          LcdShowStr(0,1,"=");                                //第二行显示 等于号 =
+ 152   2          num2_index = 0;
+ 153   2          
+ 154   2          if((result < 99999999)&&(result > -99999999))       //运算结果在范围内
+ 155   2          {
+ 156   3            if(result == (signed long)result)                 //如果结果是整型
+ 157   3            {
+ 158   4              result_len = LongToString(result_buf,result); //转为字符串
+ 159   4              Save_Result();                        //保存结果
+ 160   4              LcdAreaClear(1,1,16);
+ 161   4              LcdShowStr(16-result_len,1,result_buf);     //显示结果
+ 162   4            }
+ 163   3            else                                              //如果结果不为整型
+ 164   3            { 
+ 165   4              if((result >=0)&&(result < 0.0001))result = 0;
+ 166   4              if((result <=1)&&(result > 0.9999))result = 1;
+ 167   4              result_len = FloatToString(result_buf,result);
+ 168   4              Save_Result();
+ 169   4              LcdAreaClear(1,1,16);
+ 170   4              LcdShowStr(16-result_len,1,result_buf);     
+ 171   4            }
+ 172   3          }
+ 173   2          else                                                  //运算结果超过范围则警告
+ 174   2            Warning();
+ 175   2        }
+ 176   1        memset(num1_buf,0,sizeof(num1_buf));                      //每次计算完成后将缓冲区清零
+ 177   1        memset(num2_buf,0,sizeof(num2_buf));
+ 178   1      }
+C51 COMPILER V9.56.0.0   CALCULATE                                                         01/26/2018 20:26:52 PAGE 4   
+
+ 179          
+ 180          /*========================================================================*/
+ 181          /*函数名称:void Save_Result()
+ 182          /*函数功能:保存运算结果
+ 183          /*输入参数:无
+ 184          /*输出参数:无
+ 185          /*========================================================================*/
+ 186          void Save_Result()
+ 187          {
+ 188   1        E2P_Write(0x00,0x40,20);                     //首先清除上一个结果
+ 189   1        E2P_Write(result_buf,0x40,result_len);       //将本次运算结果存入24c02
+ 190   1      }
+ 191          
+ 192          /*========================================================================*/
+ 193          /*函数名称:void Read_Result()
+ 194          /*函数功能:读取运算结果
+ 195          /*输入参数:无
+ 196          /*输出参数:无
+ 197          /*========================================================================*/
+ 198          void Read_Result()
+ 199          {
+ 200   1        uchar j;
+ 201   1        uchar tmp[12];
+ 202   1        
+ 203   1        LcdClearAll();
+ 204   1        E2P_Read(tmp,0x40,sizeof(result_buf));      //从24c02读取运算结果
+ 205   1        
+ 206   1        for(j = 0;j < result_len;j ++)
+ 207   1        {
+ 208   2            LcdShowDat(j,0,tmp[j]);             //显示读取的结果
+ 209   2        }
+ 210   1      }
+ 211          
+ 212          /*========================================================================*/
+ 213          /*函数名称:void LcdShowOpr(uchar x,uchar y,uchar type)
+ 214          /*函数功能:lcd显示操作符
+ 215          /*输入参数:坐标(x,y) 操作符类型type
+ 216          /*输出参数:无
+ 217          /*========================================================================*/
+ 218          void LcdShowOpr(uchar x,uchar y,uchar type)
+ 219          {
+ 220   1        switch(type)
+ 221   1        {
+ 222   2          case 0:LcdShowStr(x,y,"+");break;         // 加号
+ 223   2          case 1:LcdShowStr(x,y,"-");break;         // 减号
+ 224   2          case 2:LcdShowDat(x,y,0x78);break;        // 乘号
+ 225   2          case 3:LcdShowDat(x,y,0xFD);break;        // 除号
+ 226   2          case 4:LcdShowStr(x,y,"^");break;         // 乘方
+ 227   2          default:break;
+ 228   2        }
+ 229   1      }
+ 230          
+ 231          /*========================================================================*/
+ 232          /*函数名称:void LcdShowNum(uchar y,uchar type)
+ 233          /*函数功能:lcd1602显示运算数
+ 234          /*输入参数:行数y ,运算数类型type
+ 235          /*输出参数:无
+ 236          /*========================================================================*/
+ 237          void LcdShowNum(uchar y,uchar type)
+ 238          {
+ 239   1        if(y == 0)                                       //在LCD1602第一行显示
+ 240   1        {
+C51 COMPILER V9.56.0.0   CALCULATE                                                         01/26/2018 20:26:52 PAGE 5   
+
+ 241   2          if(type == 1)
+ 242   2            LcdShowStr(16-num1_index,0,num1_buf);    //显示运算数一
+ 243   2          else if(type == 2)
+ 244   2            LcdShowStr(16-num2_index,0,num2_buf);    //显示运算数二
+ 245   2        }
+ 246   1        
+ 247   1        else if(y == 1)                                  //在LCD1602第二行显示
+ 248   1        {
+ 249   2          if(type == 1)
+ 250   2            LcdShowStr(16-num1_index,1,num1_buf);
+ 251   2          else if(type == 2)
+ 252   2            LcdShowStr(16-num2_index,1,num2_buf);
+ 253   2        }
+ 254   1      }
+ 255          
+ 256          /*========================================================================*/
+ 257          /*函数名称:void Reset()
+ 258          /*函数功能:计算器复位
+ 259          /*输入参数:无
+ 260          /*输出参数:无
+ 261          /*========================================================================*/
+ 262          void Reset()
+ 263          {
+ 264   1        num1 = 0;                                //将运算数 标志位 索引 缓冲区 清零
+ 265   1        num2 = 0;
+ 266   1        dec_flag = 0;
+ 267   1        memset(num1_buf,0,sizeof(num1_buf));
+ 268   1        memset(num2_buf,0,sizeof(num2_buf));
+ 269   1        num1_index = 0;
+ 270   1        num2_index = 0;
+ 271   1        step = 0;
+ 272   1        LcdClearAll();
+ 273   1        LcdShowStr(15,1,"0");
+ 274   1      }
+ 275          
+ 276          /*========================================================================*/
+ 277          /*函数名称:void Warning()
+ 278          /*函数功能:提出警告
+ 279          /*输入参数:无
+ 280          /*输出参数:无
+ 281          /*========================================================================*/
+ 282          void Warning()
+ 283          {
+ 284   1        uint i = 10000;
+ 285   1        
+ 286   1        Reset();
+ 287   1        
+ 288   1        if(Buzz_flag == 1)
+ 289   1        {
+ 290   2          while(i--)
+ 291   2          {
+ 292   3            Buzz = ~Buzz;
+ 293   3          }   
+ 294   2        }
+ 295   1        
+ 296   1        LcdShowStr(0,0,"    ERROR!");
+ 297   1        Delay100ms();
+ 298   1        Reset();
+ 299   1        LcdShowStr(15,1,"0");
+ 300   1      }
+
+
+C51 COMPILER V9.56.0.0   CALCULATE                                                         01/26/2018 20:26:52 PAGE 6   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1502    ----
+   CONSTANT SIZE    =     21    ----
+   XDATA SIZE       =     49      21
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

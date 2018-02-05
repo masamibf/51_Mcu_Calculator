@@ -1,0 +1,11 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\Calculate.obj",
+".\Objects\StrPro.obj",
+".\Objects\24c02.obj",
+".\Objects\1602.obj",
+".\Objects\Buzzer.obj",
+".\Objects\key.obj",
+".\Objects\key2.obj" 
+TO ".\Objects\课程设计(计算器)" 
+PRINT(".\Listings\课程设计(计算器).m51") RAMSIZE(256) 
